@@ -1,4 +1,4 @@
-# Vocabulary Learning App
+# Vocabulary Memorization Website
 
 A web-based application for learning vocabulary across multiple languages (2–4) with a testing mode and results display. Built with HTML, CSS, JavaScript ES6, and MockAPI for data persistence.
 
