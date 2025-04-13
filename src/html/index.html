@@ -1,60 +1,77 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ứng dụng học từ vựng</title>
+    <title>Vocabulary Learning App 1</title>
     <link rel="stylesheet" href="../css/style.css" />
   </head>
   <body>
     <div class="container">
-      <h1>ỨNG DỤNG HỌC TỪ VỰNG</h1>
-
-      <!-- Ngôn ngữ -->
+      <!-- Language Selection -->
       <div id="language-section">
-        <h2>Chọn ngôn ngữ</h2>
-        <input type="text" id="languageInput" placeholder="Nhập tên ngôn ngữ" />
-        <button onclick="addLanguage()">Thêm ngôn ngữ</button>
-        <ul id="languageList"></ul>
+        <h2>Select Languages (2–4)</h2>
+        <div id="language-inputs">
+          <input
+            type="text"
+            class="language-input"
+            placeholder="Native Language (e.g., Vietnamese)"
+          />
+          <input
+            type="text"
+            class="language-input"
+            placeholder="Language 2 (e.g., English)"
+          />
+        </div>
+        <button onclick="addLanguageInput()">Add Language</button>
+        <button onclick="removeLanguageInput()">Remove Language</button>
       </div>
 
-      <!-- Danh sách từ -->
-      <div id="vocab-section">
-        <h2>Danh sách từ vựng</h2>
-        <div id="wordInputs"></div>
-        <button onclick="addVocabPair()">Thêm cặp từ</button>
+      <!-- Vocabulary Input -->
+      <div id="vocabulary-section">
+        <h2>Vocabulary List (Minimum 5 Pairs)</h2>
+        <div id="vocabulary-inputs">
+          <!-- Vocabulary pairs will be added dynamically -->
+        </div>
+        <button onclick="addVocabPair()">Add Vocabulary Pair</button>
+        <button onclick="saveVocab()">Save Vocabulary</button>
       </div>
 
-      <button id="startTestBtn" onclick="startTest()">Bắt đầu kiểm tra</button>
-
-      <!-- Kiểm tra -->
-      <div id="test-section" style="display: none">
-        <h2>Chế độ kiểm tra</h2>
-        <p id="testWord"></p>
-        <input type="text" id="userAnswer" placeholder="Nhập bản dịch" />
-        <button onclick="submitAnswer()">Gửi</button>
-        <progress id="progressBar" value="0" max="100"></progress>
+      <!-- Testing Mode -->
+      <div id="testing-section" style="display: none">
+        <h2>Testing Mode</h2>
+        <p>Translate the following word:</p>
+        <p id="test-word"></p>
+        <input type="text" id="test-input" placeholder="Enter translation" />
+        <button onclick="submitAnswer()">Submit</button>
+        <div class="progress-bar">
+          <div id="progress"></div>
+        </div>
       </div>
 
-      <!-- Kết quả -->
-      <div id="result-section" style="display: none">
-        <h2>Kết quả kiểm tra</h2>
-        <p id="score"></p>
-        <table id="resultTable">
+      <!-- Results -->
+      <div id="results-section" style="display: none">
+        <h2>Test Results</h2>
+        <p id="hit-ratio"></p>
+        <table id="results-table">
           <thead>
             <tr>
-              <th>Từ gốc</th>
-              <th>Đáp án đúng</th>
-              <th>Câu trả lời của bạn</th>
-              <th>Kết quả</th>
+              <th>Original Word</th>
+              <th>Correct Translation</th>
+              <th>Your Answer</th>
+              <th>Result</th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
-        <button onclick="resetApp()">Quay lại</button>
+        <button onclick="backToVocab()">Back to Vocabulary</button>
       </div>
-    </div>
 
+      <!-- Start Test Button -->
+      <button id="start-test" onclick="startTest()" style="display: none">
+        Start Test
+      </button>
+    </div>
     <script src="../js/app.js"></script>
   </body>
 </html>
