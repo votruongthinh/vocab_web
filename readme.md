@@ -24,6 +24,14 @@ A web-based application for learning vocabulary across multiple languages (2–4
 - Internet access for MockAPI requests
 - A MockAPI account (free tier)
 
+### Running the App
+
+- Use a local server like `live-server` to avoid CORS issues:
+  ```bash
+  npm install -g live-server
+  live-server
+  ```
+
 ### Installation
 
 1. **Clone or Download the Repository**
@@ -62,6 +70,14 @@ A web-based application for learning vocabulary across multiple languages (2–4
 - Truy cập Internet để yêu cầu MockAPI
 - Tài khoản MockAPI (gói miễn phí)
 
+### Chạy ứng dụng
+
+- Sử dụng máy chủ cục bộ như `live-server` để tránh các sự cố CORS:
+
+````bash
+npm install -g live-server
+live-server
+
 ### Cài đặt
 
 1. **Sao chép hoặc tải xuống kho lưu trữ**
@@ -70,4 +86,4 @@ A web-based application for learning vocabulary across multiple languages (2–4
 git clone <repository-url>
 
    cd vocab_app
-```
+````
