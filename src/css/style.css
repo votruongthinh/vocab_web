@@ -335,3 +335,187 @@ button:active {
 .delete-btn:hover {
   background-color: #c82333;
 }
+
+@media (max-width: 768px) {
+  body {
+    padding: 1rem;
+  }
+
+  .container {
+    padding: 1.5rem;
+    width: 95%; /* Tận dụng không gian trên mobile */
+  }
+
+  h1,
+  h2 {
+    font-size: 1.3rem; /* Giảm kích thước tiêu đề */
+  }
+
+  #language-section,
+  #vocabulary-section,
+  #testing-section,
+  #results-section {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  #language-inputs {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  input {
+    min-width: 100%; /* Chiếm toàn bộ chiều ngang */
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .vocab-pair {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.8rem;
+  }
+
+  button {
+    width: 100%;
+    margin-right: 0;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  #start-test {
+    padding: 0.8rem;
+    font-size: 1rem;
+  }
+
+  #test-word {
+    font-size: 1.5rem;
+    padding: 0.8rem;
+    margin: 1rem 0;
+  }
+
+  #test-input {
+    width: 100%;
+    font-size: 1rem;
+  }
+
+  .progress-bar {
+    margin: 1rem 0;
+  }
+
+  #hit-ratio {
+    font-size: 1rem;
+  }
+
+  /* Chuyển bảng kết quả sang dạng stacked */
+  #results-table {
+    display: block;
+  }
+
+  #results-table thead {
+    display: none; /* Ẩn tiêu đề cột trên mobile */
+  }
+
+  #results-table tbody,
+  #results-table tr {
+    display: block;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e0e3ff;
+  }
+
+  #results-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    border: none;
+  }
+
+  #results-table td:before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-right: 0.5rem;
+  }
+
+  #results-table td:nth-child(1):before {
+    content: "Original Word: ";
+  }
+  #results-table td:nth-child(2):before {
+    content: "Correct Translation: ";
+  }
+  #results-table td:nth-child(3):before {
+    content: "Your Answer: ";
+  }
+  #results-table td:nth-child(4):before {
+    content: "Result: ";
+  }
+}
+
+/* Media query cho màn hình nhỏ hơn (Samsung A51: ~412px) */
+@media (max-width: 480px) {
+  body {
+    padding: 0.5rem;
+  }
+
+  .container {
+    padding: 1rem;
+    width: 98%;
+  }
+
+  h1,
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  input {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  button {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  #start-test {
+    padding: 0.7rem;
+    font-size: 0.9rem;
+  }
+
+  #test-word {
+    font-size: 1.3rem;
+    padding: 0.6rem;
+  }
+
+  #test-input {
+    font-size: 0.9rem;
+  }
+
+  #hit-ratio {
+    font-size: 0.9rem;
+  }
+
+  #results-table td {
+    padding: 0.4rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#language-section,
+#vocabulary-section,
+#testing-section,
+#results-section {
+  animation: fadeIn 0.5s ease-out;
+}
