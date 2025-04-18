@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vocabulary Learning App 1</title>
+    <title>Vocabulary Memorization Website</title>
     <link rel="stylesheet" href="./css/style.css" />
   </head>
   <body>
@@ -34,7 +34,7 @@
           <!-- Vocabulary pairs will be added dynamically -->
         </div>
         <button onclick="addVocabPair()">Add Vocabulary Pair</button>
-        <button onclick="saveVocab()">Save Vocabulary</button>
+        <button id="save-button" onclick="saveVocab()">Save Vocabulary</button>
       </div>
 
       <!-- Testing Mode -->
@@ -43,7 +43,10 @@
         <p>Translate the following word:</p>
         <p id="test-word"></p>
         <input type="text" id="test-input" placeholder="Enter translation" />
-        <button onclick="submitAnswer()">Submit</button>
+        <div>
+          <button id="back-button" onclick="goBack()">Back</button>
+          <button onclick="submitAnswer()">Submit</button>
+        </div>
         <div class="progress-bar">
           <div id="progress"></div>
         </div>

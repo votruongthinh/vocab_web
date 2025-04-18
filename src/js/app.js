@@ -1,19 +1,16 @@
-const API_URL = "https://67f864c12466325443ec8e1e.mockapi.io/vocabulary"; // Replace with your MockAPI URL
-
+const API_URL = "https://67f864c12466325443ec8e1e.mockapi.io/vocabulary";
 let languages = ["Vietnamese", "English"];
 let vocabulary = [];
 let currentTestIndex = 0;
 let userAnswers = [];
 let nativeLang = languages[0];
 
-// Initialize
 document.addEventListener("DOMContentLoaded", () => {
   renderLanguageInputs();
   renderVocabInputs();
   loadVocab();
 });
 
-// Language Management
 function addLanguageInput() {
   if (languages.length < 4) {
     languages.push("");
@@ -37,24 +34,22 @@ function renderLanguageInputs() {
   inputsDiv.innerHTML = languages
     .map(
       (lang, index) => `
-        <input type="text" class="language-input" value="${lang}" 
-               onchange="updateLanguage(${index}, this.value)" placeholder="Language ${
+            <input type="text" class="language-input" value="${lang}" 
+                   onchange="updateLanguage(${index}, this.value)" placeholder="Language ${
         index + 1
       }">
-    `
+        `
     )
     .join("");
   nativeLang = languages[0];
 }
 
-// Update language
 function updateLanguage(index, value) {
   languages[index] = value;
   nativeLang = languages[0];
   renderVocabInputs();
 }
 
-// Vocabulary Management
 function addVocabPair() {
   const inputsDiv = document.getElementById("vocabulary-inputs");
   const pairDiv = document.createElement("div");
@@ -62,8 +57,8 @@ function addVocabPair() {
     languages
       .map(
         (_, i) => `
-        <input type="text" placeholder="${languages[i]}" class="vocab-input vocab-${i}">
-    `
+            <input type="text" placeholder="${languages[i]}" class="vocab-input vocab-${i}">
+        `
       )
       .join("") +
     `<button class="delete-btn" onclick="deleteVocabPair(this)">Delete</button>`;
@@ -93,16 +88,13 @@ async function deleteVocabPair(button) {
     return;
   }
 
-  // Remove from UI
   pairDiv.remove();
 
-  // Remove from data and sync with MockAPI
   if (index < vocabulary.length) {
     const vocabToDelete = vocabulary[index];
     vocabulary.splice(index, 1);
 
     try {
-      // Find and delete from MockAPI
       const existing = await fetch(API_URL).then((res) => res.json());
       const toDelete = existing.find(
         (item) =>
@@ -112,87 +104,242 @@ async function deleteVocabPair(button) {
       if (toDelete) {
         await fetch(`${API_URL}/${toDelete.id}`, { method: "DELETE" });
       }
-      alert("Vocabulary pair deleted!");
+
       if (vocabulary.length < 5) {
         document.getElementById("start-test").style.display = "none";
       }
     } catch (error) {
       console.error("Error deleting vocabulary:", error);
       alert("Failed to delete vocabulary.");
-      // Revert UI if API fails
       renderVocabInputs();
     }
   }
 }
 
-// Save vocabulary to MockAPI
-async function saveVocab() {
+function normalizeVietnamese(str) {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+}
+
+function checkDuplicateInputs() {
   const inputsDiv = document.getElementById("vocabulary-inputs");
   const pairs = inputsDiv.children;
-  if (pairs.length < 5) {
-    alert("Minimum 5 vocabulary pairs required.");
+  const seen = new Set();
+  let hasDuplicate = false;
+
+  for (let pair of pairs) {
+    const inputs = pair.querySelectorAll("input");
+    const values = Array.from(inputs).map((input) =>
+      normalizeVietnamese(input.value.trim().toLowerCase())
+    );
+    const combined = values.join("|");
+
+    pair.title = "";
+    inputs.forEach((input) => {
+      input.style.backgroundColor = "";
+    });
+
+    if (seen.has(combined)) {
+      inputs.forEach((input) => {
+        input.style.backgroundColor = "#ffcccc";
+      });
+      pair.title = "Duplicate vocabulary pair";
+      hasDuplicate = true;
+    } else {
+      seen.add(combined);
+    }
+  }
+
+  document.getElementById("start-test").style.display =
+    hasDuplicate || vocabulary.length < 5 ? "none" : "block";
+
+  return !hasDuplicate;
+}
+
+function checkEmptyInputs() {
+  const inputsDiv = document.getElementById("vocabulary-inputs");
+  const pairs = inputsDiv.children;
+  let hasEmpty = false;
+
+  for (let pair of pairs) {
+    const inputs = pair.querySelectorAll("input");
+    let isEmptyPair = false;
+
+    inputs.forEach((input, i) => {
+      const value = input.value.trim();
+      input.style.backgroundColor = "";
+      input.title = "";
+
+      if (!value) {
+        isEmptyPair = true;
+        input.style.backgroundColor = "#ffcccc";
+        input.title = `Missing ${languages[i]} value`;
+      }
+    });
+
+    if (isEmptyPair) {
+      hasEmpty = true;
+    }
+  }
+
+  return !hasEmpty;
+}
+
+async function saveVocab() {
+  const saveButton = document.getElementById("save-button");
+
+  if (saveButton.disabled) return;
+
+  saveButton.disabled = true;
+  saveButton.textContent = "Saving...";
+
+  if (!checkDuplicateInputs()) {
+    alert("Duplicate vocabulary pairs found. Please fix them.");
+    saveButton.disabled = false;
+    saveButton.textContent = "Save Vocabulary";
     return;
   }
 
-  vocabulary = [];
+  if (!checkEmptyInputs()) {
+    alert("Some vocabulary fields are empty. Please fill all fields.");
+    saveButton.disabled = false;
+    saveButton.textContent = "Save Vocabulary";
+    return;
+  }
+
+  const inputsDiv = document.getElementById("vocabulary-inputs");
+  const pairs = inputsDiv.children;
+
+  if (pairs.length < 5) {
+    alert("Minimum 5 vocabulary pairs required.");
+    saveButton.disabled = false;
+    saveButton.textContent = "Save Vocabulary";
+    return;
+  }
+
+  const newVocabulary = [];
   for (let pair of pairs) {
     const inputs = pair.querySelectorAll("input");
     const vocabPair = {};
-    let isEmpty = true;
+
     languages.forEach((lang, i) => {
-      vocabPair[lang] = inputs[i].value.trim();
-      if (vocabPair[lang]) isEmpty = false;
+      const value = inputs[i].value.trim();
+      vocabPair[lang] = value;
     });
-    if (!isEmpty) vocabulary.push(vocabPair);
+
+    newVocabulary.push(vocabPair);
   }
 
-  if (vocabulary.length < 5) {
-    alert("Please fill at least 5 valid vocabulary pairs.");
-    return;
+  const seen = new Set();
+  for (let pair of newVocabulary) {
+    const combined = languages
+      .map((lang) => pair[lang].toLowerCase())
+      .join("|");
+    if (seen.has(combined)) {
+      alert("Duplicate vocabulary pair detected. Please fix before saving.");
+      saveButton.disabled = false;
+      saveButton.textContent = "Save Vocabulary";
+      return;
+    }
+    seen.add(combined);
   }
 
   try {
-    // Clear existing data
     const existing = await fetch(API_URL).then((res) => res.json());
-    for (let item of existing) {
-      await fetch(`${API_URL}/${item.id}`, { method: "DELETE" });
-    }
+    const deletePromises = existing.map((item) =>
+      fetch(`${API_URL}/${item.id}`, { method: "DELETE" })
+    );
+    await Promise.all(deletePromises);
 
-    // Save new data
-    for (let pair of vocabulary) {
-      await fetch(API_URL, {
+    const savePromises = newVocabulary.map((pair) =>
+      fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pair),
-      });
-    }
-    alert("Vocabulary saved!");
+      })
+    );
+    await Promise.all(savePromises);
+
+    vocabulary = newVocabulary;
+
+    alert("Vocabulary saved successfully!");
     document.getElementById("start-test").style.display = "block";
   } catch (error) {
     console.error("Error saving vocabulary:", error);
     alert("Failed to save vocabulary.");
   }
+
+  saveButton.disabled = false;
+  saveButton.textContent = "Save Vocabulary";
 }
 
-// Load vocabulary from MockAPI
 async function loadVocab() {
   try {
     const response = await fetch(API_URL);
-    vocabulary = await response.json();
+    let existingVocab = await response.json();
+
+    const seen = new Set();
+    const uniqueVocab = [];
+    for (let item of existingVocab) {
+      const hasEmptyField = languages.some((lang) => !item[lang]?.trim());
+      if (hasEmptyField) continue;
+
+      const combined = languages
+        .map((lang) => item[lang]?.toLowerCase() || "")
+        .join("|");
+      if (!seen.has(combined)) {
+        seen.add(combined);
+        uniqueVocab.push(item);
+      }
+    }
+
+    vocabulary = uniqueVocab;
+
     renderVocabInputs();
-    if (vocabulary.length >= 5) {
+
+    checkDuplicateInputs();
+    checkEmptyInputs();
+
+    if (
+      vocabulary.length >= 5 &&
+      checkDuplicateInputs() &&
+      checkEmptyInputs()
+    ) {
       document.getElementById("start-test").style.display = "block";
+    } else {
+      document.getElementById("start-test").style.display = "none";
     }
   } catch (error) {
     console.error("Error loading vocabulary:", error);
+    alert("Failed to load vocabulary.");
   }
 }
 
-// Testing Mode
 function startTest() {
   if (vocabulary.length < 5) {
     alert("Please save at least 5 vocabulary pairs before starting the test.");
     return;
+  }
+
+  if (!checkDuplicateInputs()) {
+    alert("Cannot start test. Please fix duplicate vocabulary entries.");
+    return;
+  }
+
+  if (!checkEmptyInputs()) {
+    alert("Cannot start test. Please fill all vocabulary fields.");
+    return;
+  }
+
+  for (let pair of vocabulary) {
+    const hasEmptyField = languages.some((lang) => !pair[lang]?.trim());
+    if (hasEmptyField) {
+      alert("Cannot start test. Some saved vocabulary fields are empty.");
+      return;
+    }
   }
 
   document.getElementById("vocabulary-section").style.display = "none";
@@ -208,8 +355,22 @@ function showTestWord() {
   if (currentTestIndex < vocabulary.length) {
     const word = vocabulary[currentTestIndex][nativeLang];
     document.getElementById("test-word").textContent = word;
-    document.getElementById("test-input").value = "";
+    document.getElementById("test-input").value =
+      userAnswers[currentTestIndex]?.userAnswer || "";
     updateProgress();
+
+    const testInput = document.getElementById("test-input");
+    testInput.focus();
+
+    testInput.onkeydown = function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitAnswer();
+      }
+    };
+
+    const backButton = document.getElementById("back-button");
+    backButton.disabled = currentTestIndex === 0;
   } else {
     showResults();
   }
@@ -217,13 +378,41 @@ function showTestWord() {
 
 function submitAnswer() {
   const answer = document.getElementById("test-input").value.trim();
-  userAnswers.push({
-    original: vocabulary[currentTestIndex][nativeLang],
-    correct: vocabulary[currentTestIndex][languages[1]], // Assuming second language as target
-    userAnswer: answer,
-  });
+  if (userAnswers[currentTestIndex]) {
+    userAnswers[currentTestIndex].userAnswer = answer;
+  } else {
+    userAnswers.push({
+      original: vocabulary[currentTestIndex][nativeLang],
+      correct: vocabulary[currentTestIndex][languages[1]],
+      userAnswer: answer,
+    });
+  }
   currentTestIndex++;
   showTestWord();
+}
+
+function goBack() {
+  if (currentTestIndex > 0) {
+    const answer = document.getElementById("test-input").value.trim();
+    if (userAnswers[currentTestIndex]) {
+      userAnswers[currentTestIndex].userAnswer = answer;
+    } else {
+      userAnswers.push({
+        original: vocabulary[currentTestIndex][nativeLang],
+        correct: vocabulary[currentTestIndex][languages[1]],
+        userAnswer: answer,
+      });
+    }
+    currentTestIndex--;
+    userAnswers = userAnswers.slice(0, currentTestIndex + 1);
+    const word = vocabulary[currentTestIndex][nativeLang];
+    document.getElementById("test-word").textContent = word;
+    document.getElementById("test-input").value =
+      userAnswers[currentTestIndex]?.userAnswer || "";
+    updateProgress();
+    document.getElementById("back-button").disabled = currentTestIndex === 0;
+    document.getElementById("test-input").focus();
+  }
 }
 
 function updateProgress() {
@@ -231,7 +420,6 @@ function updateProgress() {
   document.getElementById("progress").style.width = `${progress}%`;
 }
 
-// Results
 function showResults() {
   document.getElementById("testing-section").style.display = "none";
   document.getElementById("results-section").style.display = "block";
@@ -250,15 +438,15 @@ function showResults() {
       const isCorrect =
         answer.userAnswer.toLowerCase() === answer.correct.toLowerCase();
       return `
-            <tr>
-                <td>${answer.original}</td>
-                <td>${answer.correct}</td>
-                <td>${answer.userAnswer}</td>
-                <td class="${isCorrect ? "hit" : "miss"}">
-                    ${isCorrect ? "✅" : "❌"}
-                </td>
-            </tr>
-        `;
+                <tr>
+                    <td>${answer.original}</td>
+                    <td>${answer.correct}</td>
+                    <td>${answer.userAnswer}</td>
+                    <td class="${isCorrect ? "hit" : "miss"}">
+                        ${isCorrect ? "✅" : "❌"}
+                    </td>
+                </tr>
+            `;
     })
     .join("");
 }
