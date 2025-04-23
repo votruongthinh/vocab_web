@@ -4,52 +4,128 @@ let vocabulary = [];
 let currentTestIndex = 0;
 let userAnswers = [];
 let nativeLang = languages[0];
+let testLanguage = languages[1];
 
+// Hàm hiển thị thông báo
+function showNotification(message, type) {
+  const notification = document.getElementById("notification");
+  notification.textContent = message;
+  notification.className = `notification ${type}`;
+  notification.style.display = "block";
+  setTimeout(() => (notification.style.display = "none"), 1000);
+}
+
+// Khởi tạo khi tải trang
 document.addEventListener("DOMContentLoaded", () => {
+  const savedLanguages = localStorage.getItem("languages");
+  if (savedLanguages) {
+    languages = JSON.parse(savedLanguages);
+    nativeLang = languages[0];
+    testLanguage = languages[1];
+  }
   renderLanguageInputs();
   renderVocabInputs();
   loadVocab();
 });
 
+// Thêm ngôn ngữ mới
 function addLanguageInput() {
   if (languages.length < 4) {
     languages.push("");
+    vocabulary = vocabulary.map((pair) => ({
+      ...pair,
+      [languages[languages.length - 1]]: "",
+    }));
     renderLanguageInputs();
+    renderVocabInputs();
+    localStorage.setItem("languages", JSON.stringify(languages));
+    localStorage.setItem("vocabulary", JSON.stringify(vocabulary));
   } else {
-    alert("Maximum 4 languages allowed.");
+    showNotification("Maximum 4 languages allowed.", "error");
   }
 }
 
+// Xóa ngôn ngữ
 function removeLanguageInput() {
   if (languages.length > 2) {
-    languages.pop();
+    const removedLang = languages.pop();
+    vocabulary = vocabulary.map((pair) => {
+      const newPair = { ...pair };
+      delete newPair[removedLang];
+      return newPair;
+    });
+    nativeLang = languages[0];
+    testLanguage = languages[1] || "";
     renderLanguageInputs();
+    renderVocabInputs();
+    localStorage.setItem("languages", JSON.stringify(languages));
+    localStorage.setItem("vocabulary", JSON.stringify(vocabulary));
   } else {
-    alert("Minimum 2 languages required.");
+    showNotification("Minimum 2 languages required.", "error");
   }
 }
 
+// Hiển thị input ngôn ngữ và dropdown chọn ngôn ngữ kiểm tra
 function renderLanguageInputs() {
   const inputsDiv = document.getElementById("language-inputs");
-  inputsDiv.innerHTML = languages
-    .map(
-      (lang, index) => `
-            <input type="text" class="language-input" value="${lang}" 
-                   onchange="updateLanguage(${index}, this.value)" placeholder="Language ${
-        index + 1
-      }">
+  inputsDiv.innerHTML = `
+    <div class="language-inputs-container">
+      ${languages
+        .map(
+          (lang, index) => `
+          <input type="text" class="language-input" value="${lang}" 
+                 onchange="updateLanguage(${index}, this.value)" placeholder="Language ${
+            index + 1
+          }">
         `
-    )
-    .join("");
-  nativeLang = languages[0];
+        )
+        .join("")}
+    </div>
+    <div class="test-language-container">
+      <label for="test-language-dropdown">Test Language:</label>
+      <div class="custom-select-wrapper">
+        <select id="test-language-dropdown" onchange="updateTestLanguage(this.value)">
+          ${languages
+            .slice(1)
+            .map(
+              (lang) =>
+                `<option value="${lang}" ${
+                  lang === testLanguage ? "selected" : ""
+                }>${lang}</option>`
+            )
+            .join("")}
+        </select>
+        <span class="select-arrow">▼</span>
+      </div>
+    </div>
+  `;
 }
 
+// Cập nhật ngôn ngữ
 function updateLanguage(index, value) {
   languages[index] = value;
   nativeLang = languages[0];
+  testLanguage = languages[1] || "";
+  vocabulary = vocabulary.map((pair) => {
+    const newPair = { ...pair };
+    if (!newPair[languages[index]]) {
+      newPair[languages[index]] = "";
+    }
+    return newPair;
+  });
+  localStorage.setItem("languages", JSON.stringify(languages));
+  localStorage.setItem("vocabulary", JSON.stringify(vocabulary));
+  renderLanguageInputs();
   renderVocabInputs();
 }
 
+// Cập nhật ngôn ngữ kiểm tra
+function updateTestLanguage(value) {
+  testLanguage = value;
+  localStorage.setItem("testLanguage", testLanguage);
+}
+
+// Thêm cặp từ vựng
 function addVocabPair() {
   const inputsDiv = document.getElementById("vocabulary-inputs");
   const pairDiv = document.createElement("div");
@@ -57,34 +133,51 @@ function addVocabPair() {
     languages
       .map(
         (_, i) => `
-            <input type="text" placeholder="${languages[i]}" class="vocab-input vocab-${i}">
-        `
+        <input type="text" placeholder="${languages[i]}" class="vocab-input vocab-${i}">
+      `
       )
       .join("") +
     `<button class="delete-btn" onclick="deleteVocabPair(this)">Delete</button>`;
   inputsDiv.appendChild(pairDiv);
 }
 
+// Hiển thị input từ vựng
 function renderVocabInputs() {
   const inputsDiv = document.getElementById("vocabulary-inputs");
   inputsDiv.innerHTML = "";
   for (let i = 0; i < Math.max(5, vocabulary.length); i++) {
-    addVocabPair();
+    const pairDiv = document.createElement("div");
+    pairDiv.innerHTML =
+      languages
+        .map(
+          (_, j) => `
+          <input type="text" placeholder="${languages[j]}" class="vocab-input vocab-${j}">
+        `
+        )
+        .join("") +
+      `<button class="delete-btn" onclick="deleteVocabPair(this)">Delete</button>`;
+    inputsDiv.appendChild(pairDiv);
+
+    if (i < vocabulary.length) {
+      const inputs = pairDiv.querySelectorAll("input");
+      languages.forEach((lang, j) => {
+        inputs[j].value = vocabulary[i][lang] || "";
+      });
+    }
   }
-  vocabulary.forEach((pair, index) => {
-    const inputs = inputsDiv.children[index].querySelectorAll("input");
-    languages.forEach((_, i) => {
-      inputs[i].value = pair[languages[i]] || "";
-    });
-  });
+  checkInputs();
 }
 
+// Xóa cặp từ vựng
 async function deleteVocabPair(button) {
   const pairDiv = button.parentElement;
   const index = Array.from(pairDiv.parentElement.children).indexOf(pairDiv);
 
   if (vocabulary.length <= 5 && index < vocabulary.length) {
-    alert("Cannot delete: Minimum 5 vocabulary pairs required.");
+    showNotification(
+      "Cannot delete: Minimum 5 vocabulary pairs required.",
+      "error"
+    );
     return;
   }
 
@@ -104,18 +197,17 @@ async function deleteVocabPair(button) {
       if (toDelete) {
         await fetch(`${API_URL}/${toDelete.id}`, { method: "DELETE" });
       }
-
-      if (vocabulary.length < 5) {
-        document.getElementById("start-test").style.display = "none";
-      }
+      localStorage.setItem("vocabulary", JSON.stringify(vocabulary));
+      checkInputs();
     } catch (error) {
       console.error("Error deleting vocabulary:", error);
-      alert("Failed to delete vocabulary.");
+      showNotification("Failed to delete vocabulary.", "error");
       renderVocabInputs();
     }
   }
 }
 
+// Chuẩn hóa tiếng Việt
 function normalizeVietnamese(str) {
   return str
     .normalize("NFD")
@@ -124,87 +216,74 @@ function normalizeVietnamese(str) {
     .replace(/Đ/g, "D");
 }
 
-function checkDuplicateInputs() {
+// Kiểm tra trùng lặp và empty
+function checkInputs() {
   const inputsDiv = document.getElementById("vocabulary-inputs");
   const pairs = inputsDiv.children;
   const seen = new Set();
-  let hasDuplicate = false;
+  let hasError = false;
+  let hasEmpty = false;
 
   for (let pair of pairs) {
     const inputs = pair.querySelectorAll("input");
-    const values = Array.from(inputs).map((input) =>
-      normalizeVietnamese(input.value.trim().toLowerCase())
+    const values = Array.from(inputs).map((input) => input.value.trim());
+    const normalizedValues = values.map((val) =>
+      normalizeVietnamese(val.toLowerCase())
     );
-    const combined = values.join("|");
+    const combined = normalizedValues.join("|");
 
-    pair.title = "";
     inputs.forEach((input) => {
       input.style.backgroundColor = "";
+      input.title = "";
+    });
+    pair.title = "";
+
+    values.forEach((value, i) => {
+      if (!value) {
+        hasEmpty = true;
+        inputs[i].style.backgroundColor = "#ffcccc";
+        inputs[i].title = `Missing ${languages[i]} value`;
+      }
     });
 
     if (seen.has(combined)) {
+      hasError = true;
       inputs.forEach((input) => {
         input.style.backgroundColor = "#ffcccc";
       });
       pair.title = "Duplicate vocabulary pair";
-      hasDuplicate = true;
     } else {
       seen.add(combined);
     }
   }
 
   document.getElementById("start-test").style.display =
-    hasDuplicate || vocabulary.length < 5 ? "none" : "block";
+    hasError || hasEmpty || pairs.length < 5 ? "none" : "block";
 
-  return !hasDuplicate;
+  return { isValid: !hasError && !hasEmpty, pairCount: pairs.length };
 }
 
-function checkEmptyInputs() {
-  const inputsDiv = document.getElementById("vocabulary-inputs");
-  const pairs = inputsDiv.children;
-  let hasEmpty = false;
-
-  for (let pair of pairs) {
-    const inputs = pair.querySelectorAll("input");
-    let isEmptyPair = false;
-
-    inputs.forEach((input, i) => {
-      const value = input.value.trim();
-      input.style.backgroundColor = "";
-      input.title = "";
-
-      if (!value) {
-        isEmptyPair = true;
-        input.style.backgroundColor = "#ffcccc";
-        input.title = `Missing ${languages[i]} value`;
-      }
-    });
-
-    if (isEmptyPair) {
-      hasEmpty = true;
-    }
-  }
-
-  return !hasEmpty;
-}
-
+// Lưu từ vựng
 async function saveVocab() {
   const saveButton = document.getElementById("save-button");
-
   if (saveButton.disabled) return;
 
   saveButton.disabled = true;
   saveButton.textContent = "Saving...";
 
-  if (!checkDuplicateInputs()) {
-    alert("Duplicate vocabulary pairs found. Please fix them.");
+  const { isValid, pairCount } = checkInputs();
+  if (!isValid) {
+    showNotification(
+      "Please fix duplicate or empty vocabulary entries.",
+      "error"
+    );
     saveButton.disabled = false;
     saveButton.textContent = "Save Vocabulary";
     return;
   }
 
-  if (!checkEmptyInputs()) {
-    alert("Some vocabulary fields are empty. Please fill all fields.");
+  if (pairCount < 5) {
+    showNotification("Minimum 5 vocabulary pairs required.", "error");
     saveButton.disabled = false;
     saveButton.textContent = "Save Vocabulary";
     return;
@@ -212,71 +291,63 @@ async function saveVocab() {
 
   const inputsDiv = document.getElementById("vocabulary-inputs");
   const pairs = inputsDiv.children;
-
-  if (pairs.length < 5) {
-    alert("Minimum 5 vocabulary pairs required.");
-    saveButton.disabled = false;
-    saveButton.textContent = "Save Vocabulary";
-    return;
-  }
-
-  const newVocabulary = [];
-  for (let pair of pairs) {
+  const newVocabulary = Array.from(pairs).map((pair) => {
     const inputs = pair.querySelectorAll("input");
     const vocabPair = {};
-
     languages.forEach((lang, i) => {
-      const value = inputs[i].value.trim();
-      vocabPair[lang] = value;
+      vocabPair[lang] = inputs[i].value.trim();
     });
-
-    newVocabulary.push(vocabPair);
-  }
-
-  const seen = new Set();
-  for (let pair of newVocabulary) {
-    const combined = languages
-      .map((lang) => pair[lang].toLowerCase())
-      .join("|");
-    if (seen.has(combined)) {
-      alert("Duplicate vocabulary pair detected. Please fix before saving.");
-      saveButton.disabled = false;
-      saveButton.textContent = "Save Vocabulary";
-      return;
-    }
-    seen.add(combined);
-  }
+    return vocabPair;
+  });
 
   try {
     const existing = await fetch(API_URL).then((res) => res.json());
-    const deletePromises = existing.map((item) =>
-      fetch(`${API_URL}/${item.id}`, { method: "DELETE" })
+    await Promise.all(
+      existing.map((item) =>
+        fetch(`${API_URL}/${item.id}`, { method: "DELETE" })
+      )
     );
-    await Promise.all(deletePromises);
 
-    const savePromises = newVocabulary.map((pair) =>
-      fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pair),
-      })
+    await Promise.all(
+      newVocabulary.map((pair) =>
+        fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(pair),
+        })
+      )
     );
-    await Promise.all(savePromises);
 
     vocabulary = newVocabulary;
-
-    alert("Vocabulary saved successfully!");
+    localStorage.setItem("vocabulary", JSON.stringify(vocabulary));
+    showNotification("Vocabulary saved successfully!", "success");
     document.getElementById("start-test").style.display = "block";
   } catch (error) {
     console.error("Error saving vocabulary:", error);
-    alert("Failed to save vocabulary.");
+    showNotification("Failed to save vocabulary. Please try again.", "error");
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = "Save Vocabulary";
   }
-
-  saveButton.disabled = false;
-  saveButton.textContent = "Save Vocabulary";
 }
 
+// Tải từ vựng
 async function loadVocab() {
+  const cachedVocab = localStorage.getItem("vocabulary");
+  if (cachedVocab) {
+    try {
+      vocabulary = JSON.parse(cachedVocab);
+      renderVocabInputs();
+      const { isValid, pairCount } = checkInputs();
+      if (pairCount >= 5 && isValid) {
+        document.getElementById("start-test").style.display = "block";
+      }
+      return;
+    } catch (error) {
+      console.error("Error parsing cached vocabulary:", error);
+    }
+  }
+
   try {
     const response = await fetch(API_URL);
     let existingVocab = await response.json();
@@ -288,7 +359,7 @@ async function loadVocab() {
       if (hasEmptyField) continue;
 
       const combined = languages
-        .map((lang) => item[lang]?.toLowerCase() || "")
+        .map((lang) => normalizeVietnamese(item[lang]?.toLowerCase() || ""))
         .join("|");
       if (!seen.has(combined)) {
         seen.add(combined);
@@ -297,49 +368,39 @@ async function loadVocab() {
     }
 
     vocabulary = uniqueVocab;
-
+    localStorage.setItem("vocabulary", JSON.stringify(vocabulary));
     renderVocabInputs();
-
-    checkDuplicateInputs();
-    checkEmptyInputs();
-
-    if (
-      vocabulary.length >= 5 &&
-      checkDuplicateInputs() &&
-      checkEmptyInputs()
-    ) {
+    const { isValid, pairCount } = checkInputs();
+    if (pairCount >= 5 && isValid) {
       document.getElementById("start-test").style.display = "block";
-    } else {
-      document.getElementById("start-test").style.display = "none";
     }
   } catch (error) {
     console.error("Error loading vocabulary:", error);
-    alert("Failed to load vocabulary.");
+    showNotification("Failed to load vocabulary.", "error");
   }
 }
 
+// Bắt đầu kiểm tra
 function startTest() {
-  if (vocabulary.length < 5) {
-    alert("Please save at least 5 vocabulary pairs before starting the test.");
+  const { isValid, pairCount } = checkInputs();
+  if (pairCount < 5) {
+    showNotification(
+      "Please save at least 5 vocabulary pairs before starting the test.",
+      "error"
+    );
+    return;
+  }
+  if (!isValid) {
+    showNotification(
+      "Cannot start test. Please fix duplicate or empty vocabulary entries.",
+      "error"
+    );
     return;
   }
 
-  if (!checkDuplicateInputs()) {
-    alert("Cannot start test. Please fix duplicate vocabulary entries.");
+  if (!languages.includes(testLanguage) || testLanguage === nativeLang) {
+    showNotification("Please select a valid test language.", "error");
     return;
-  }
-
-  if (!checkEmptyInputs()) {
-    alert("Cannot start test. Please fill all vocabulary fields.");
-    return;
-  }
-
-  for (let pair of vocabulary) {
-    const hasEmptyField = languages.some((lang) => !pair[lang]?.trim());
-    if (hasEmptyField) {
-      alert("Cannot start test. Some saved vocabulary fields are empty.");
-      return;
-    }
   }
 
   document.getElementById("vocabulary-section").style.display = "none";
@@ -351,6 +412,7 @@ function startTest() {
   showTestWord();
 }
 
+// Hiển thị từ cần kiểm tra
 function showTestWord() {
   if (currentTestIndex < vocabulary.length) {
     const word = vocabulary[currentTestIndex][nativeLang];
@@ -361,21 +423,20 @@ function showTestWord() {
 
     const testInput = document.getElementById("test-input");
     testInput.focus();
-
-    testInput.onkeydown = function (event) {
+    testInput.onkeydown = (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
         submitAnswer();
       }
     };
 
-    const backButton = document.getElementById("back-button");
-    backButton.disabled = currentTestIndex === 0;
+    document.getElementById("back-button").disabled = currentTestIndex === 0;
   } else {
     showResults();
   }
 }
 
+// Gửi câu trả lời
 function submitAnswer() {
   const answer = document.getElementById("test-input").value.trim();
   if (userAnswers[currentTestIndex]) {
@@ -383,7 +444,7 @@ function submitAnswer() {
   } else {
     userAnswers.push({
       original: vocabulary[currentTestIndex][nativeLang],
-      correct: vocabulary[currentTestIndex][languages[1]],
+      correct: vocabulary[currentTestIndex][testLanguage],
       userAnswer: answer,
     });
   }
@@ -391,6 +452,7 @@ function submitAnswer() {
   showTestWord();
 }
 
+// Quay lại từ trước
 function goBack() {
   if (currentTestIndex > 0) {
     const answer = document.getElementById("test-input").value.trim();
@@ -399,7 +461,7 @@ function goBack() {
     } else {
       userAnswers.push({
         original: vocabulary[currentTestIndex][nativeLang],
-        correct: vocabulary[currentTestIndex][languages[1]],
+        correct: vocabulary[currentTestIndex][testLanguage],
         userAnswer: answer,
       });
     }
@@ -415,11 +477,13 @@ function goBack() {
   }
 }
 
+// Cập nhật tiến độ
 function updateProgress() {
   const progress = (currentTestIndex / vocabulary.length) * 100;
   document.getElementById("progress").style.width = `${progress}%`;
 }
 
+// Hiển thị kết quả
 function showResults() {
   document.getElementById("testing-section").style.display = "none";
   document.getElementById("results-section").style.display = "block";
@@ -438,23 +502,24 @@ function showResults() {
       const isCorrect =
         answer.userAnswer.toLowerCase() === answer.correct.toLowerCase();
       return `
-                <tr>
-                    <td>${answer.original}</td>
-                    <td>${answer.correct}</td>
-                    <td>${answer.userAnswer}</td>
-                    <td class="${isCorrect ? "hit" : "miss"}">
-                        ${isCorrect ? "✅" : "❌"}
-                    </td>
-                </tr>
-            `;
+        <tr>
+          <td>${answer.original}</td>
+          <td>${answer.correct}</td>
+          <td>${answer.userAnswer}</td>
+          <td class="${isCorrect ? "hit" : "miss"}">${
+        isCorrect ? "✅" : "❌"
+      }</td>
+        </tr>
+      `;
     })
     .join("");
 }
 
+// Quay lại màn hình từ vựng
 function backToVocab() {
   document.getElementById("results-section").style.display = "none";
   document.getElementById("vocabulary-section").style.display = "block";
   document.getElementById("language-section").style.display = "block";
   document.getElementById("start-test").style.display =
-    vocabulary.length >= 5 ? "block" : "none";
+    vocabulary.length >= 5 && checkInputs().isValid ? "block" : "none";
 }
