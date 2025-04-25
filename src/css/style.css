@@ -223,26 +223,36 @@ button {
   justify-content: center;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent; /* Tắt tap highlight trên mobile */
 }
 
-/* Trạng thái mặc định để reset */
-button:not(:hover):not(:active) {
+/* Trạng thái mặc định */
+button {
   background-color: var(--primary-color);
   transform: translateY(0);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Hover và active */
-button:hover,
-button:active {
+/* Hover, active, focus */
+button:hover {
   background-color: var(--secondary-color);
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 button:active {
+  background-color: var(--secondary-color);
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:focus {
+  outline: none;
+  background-color: var(
+    --primary-color
+  ); /* Đảm bảo trạng thái focus không giữ style hover */
+  transform: translateY(0);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Start test button */
@@ -256,14 +266,13 @@ button:active {
   margin-top: 1.5rem;
 }
 
-#start-test:not(:hover):not(:active) {
+#start-test {
   background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
   transform: translateY(0);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-#start-test:hover,
-#start-test:active {
+#start-test:hover {
   background: linear-gradient(
     90deg,
     var(--secondary-color),
@@ -275,6 +284,18 @@ button:active {
 }
 
 #start-test:active {
+  background: linear-gradient(
+    90deg,
+    var(--secondary-color),
+    var(--primary-color)
+  );
+  transform: translateY(0);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#start-test:focus {
+  outline: none;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
   transform: translateY(0);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
@@ -289,22 +310,29 @@ button:active {
   margin: 0;
 }
 
-.delete-btn:not(:hover):not(:active) {
+.delete-btn {
   background-color: #dc3545;
   transform: translateY(0);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.delete-btn:hover,
-.delete-btn:active {
+.delete-btn:hover {
   background-color: #c82333;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .delete-btn:active {
+  background-color: #c82333;
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.delete-btn:focus {
+  outline: none;
+  background-color: #dc3545;
+  transform: translateY(0);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Vocabulary pairs */
@@ -505,6 +533,7 @@ button:active {
     margin-right: 0;
     padding: 0.6rem;
     font-size: 0.9rem;
+    -webkit-tap-highlight-color: transparent; /* Đảm bảo tắt tap highlight */
   }
 
   #start-test {
@@ -604,16 +633,17 @@ button:active {
   button {
     padding: 0.5rem;
     font-size: 0.85rem;
+    -webkit-tap-highlight-color: transparent; /* Đảm bảo tắt tap highlight */
   }
 
   #start-test {
     padding: 0.7rem;
     font-size: 0.9rem;
+  }
 
-    .delete-btn {
-      padding: 0.5rem;
-      font-size: 0.85rem;
-    }
+  .delete-btn {
+    padding: 0.5rem;
+    font-size: 0.85rem;
   }
 
   #test-word {
