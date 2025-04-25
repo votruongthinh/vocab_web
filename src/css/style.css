@@ -15,7 +15,7 @@
 }
 
 * {
-  margin: invaluable;
+  margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
@@ -250,20 +250,9 @@ button:focus {
   outline: none;
   background-color: var(
     --primary-color
-  ); /* Đảm bảo trạng thái focus trở về màu mặc định */
+  ); /* Đảm bảo trạng thái focus không giữ style hover */
   transform: translateY(0);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Tắt hover trên mobile */
-@media (hover: none) {
-  button:hover {
-    background-color: var(
-      --primary-color
-    ); /* Ngăn hover thay đổi màu trên mobile */
-    transform: translateY(0);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
 }
 
 /* Start test button */
@@ -311,19 +300,6 @@ button:focus {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Tắt hover trên mobile cho #start-test */
-@media (hover: none) {
-  #start-test:hover {
-    background: linear-gradient(
-      90deg,
-      var(--primary-color),
-      var(--accent-color)
-    );
-    transform: translateY(0);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  }
-}
-
 /* Delete button */
 .delete-btn {
   background-color: #dc3545;
@@ -357,15 +333,6 @@ button:focus {
   background-color: #dc3545;
   transform: translateY(0);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Tắt hover trên mobile cho .delete-btn */
-@media (hover: none) {
-  .delete-btn:hover {
-    background-color: #dc3545;
-    transform: translateY(0);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
 }
 
 /* Vocabulary pairs */
