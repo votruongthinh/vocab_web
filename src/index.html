@@ -35,7 +35,9 @@
           <!-- Vocabulary pairs will be added dynamically -->
         </div>
         <button onclick="addVocabPair()">Add Vocabulary Pair</button>
-        <button id="save-button" onclick="saveVocab()">Save Vocabulary</button>
+        <button id="save-vocab-btn" onclick="saveVocab()">
+          Save Vocabulary
+        </button>
       </div>
 
       <!-- Testing Mode -->
@@ -45,7 +47,7 @@
         <p id="test-word"></p>
         <input type="text" id="test-input" placeholder="Enter translation" />
         <div>
-          <button id="back-button" onclick="goBack()">Back</button>
+          <button id="back-button" onclick="goBack()">Go Back</button>
           <button onclick="submitAnswer()">Submit</button>
         </div>
         <div class="progress-bar">
